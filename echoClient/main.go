@@ -1,6 +1,3 @@
-client code  
-
-```
 package main
 
 import (
@@ -43,4 +40,3 @@ func checkError(err error) {
 		log.Fatal(err)
 	}
 }
-```
