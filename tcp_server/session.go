@@ -1,6 +1,8 @@
 package main
 
-import "net"
+import (
+	"net"
+)
 
 // Session holds info about connection
 type Session struct {
@@ -18,26 +20,28 @@ func (session *Session) handleTcpRead() {
 	for {
 		recvBytes, err := session.conn.Read(recviveBuff[startRecvPos:])
 		if err != nil {
-			session.conn.Close()
-			session.Server.onClientConnectionClosed(session, NET_CLOSE_REMOTE)
+			session.closeProcess(NET_CLOSE_REMOTE)
 			return
 		}
 
 		if recvBytes < HEADER_SIZE {
-			session.conn.Close()
-			session.Server.onClientConnectionClosed(session, NET_CLOSE_RECV_TOO_SMALL_RECV_DATA)
+			session.closeProcess(NET_CLOSE_RECV_TOO_SMALL_RECV_DATA)
 			return
 		}
-
 
 		readAbleByte := int16(startRecvPos) + int16(recvBytes)
 		startRecvPos, result = session.makePacket(readAbleByte, recviveBuff)
 		if result != NET_ERROR_NONE {
-			session.conn.Close()
-			session.Server.onClientConnectionClosed(session, result)
+			session.closeProcess(result)
+			return
 		}
 
 	}
+}
+
+func (session *Session) closeProcess(reason int) {
+	session.conn.Close()
+	session.Server.onClientConnectionClosed(session, reason)
 }
 
 func (session *Session) makePacket(readAbleByte int16,	recviveBuff []byte) (int16, int) {
