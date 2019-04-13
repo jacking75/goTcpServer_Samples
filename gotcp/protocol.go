@@ -1,4 +1,4 @@
-package serverLib
+package main
 
 type Packet interface {
 	Serialize() []byte

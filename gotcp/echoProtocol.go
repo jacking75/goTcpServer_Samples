@@ -1,7 +1,6 @@
 package main
 
 import (
-	"../serverLib"
 	"encoding/binary"
 )
 
@@ -54,7 +53,7 @@ const (
 	MAX_PACKET_SIZE = 1024
 )
 
-func (this *EchoProtocol) ReadPacket(recvData []byte) (serverLib.Packet, int16) {
+func (this *EchoProtocol) ReadPacket(recvData []byte) (Packet, int16) {
 	readAbleByte := int16(len(recvData))
 
 	if readAbleByte < HEADER_SIZE {

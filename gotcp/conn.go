@@ -1,4 +1,4 @@
-package serverLib
+package main
 
 import (
 	"errors"
@@ -18,9 +18,9 @@ var (
 // Conn exposes a set of callbacks for the various events that occur on a connection
 type Conn struct {
 	srv               *Server
-	conn              *net.TCPConn  // the raw connection
+	tcpConn           *net.TCPConn  // the raw connection
 	extraData         interface{}   // to save extra data
-	closeOnce         sync.Once     // close the conn, once, per instance
+	closeOnce         sync.Once     // close the tcpConn, once, per instance
 	closeFlag         int32         // close flag
 	closeChan         chan struct{} // close chanel
 	packetSendChan    chan Packet   // packet send chanel
@@ -41,11 +41,11 @@ type ConnCallback interface {
 	OnClose(*Conn)
 }
 
-// newConn returns a wrapper of raw conn
+// newConn returns a wrapper of raw tcpConn
 func newConn(conn *net.TCPConn, srv *Server) *Conn {
 	return &Conn{
 		srv:               srv,
-		conn:              conn,
+		tcpConn:           conn,
 		closeChan:         make(chan struct{}),
 		packetSendChan:    make(chan Packet, srv.config.PacketSendChanLimit),
 		packetReceiveChan: make(chan Packet, srv.config.PacketReceiveChanLimit),
@@ -64,7 +64,7 @@ func (c *Conn) PutExtraData(data interface{}) {
 
 // GetRawConn returns the raw net.TCPConn from the Conn
 func (c *Conn) GetRawConn() *net.TCPConn {
-	return c.conn
+	return c.tcpConn
 }
 
 // Close closes the connection
@@ -74,7 +74,7 @@ func (c *Conn) Close() {
 		close(c.closeChan)
 		close(c.packetSendChan)
 		close(c.packetReceiveChan)
-		c.conn.Close()
+		c.tcpConn.Close()
 		c.srv.callback.OnClose(c)
 	})
 }
@@ -153,7 +153,7 @@ func (c *Conn) readLoop() {
 		default:
 		}
 
-		recvLen, err := c.conn.Read(recviveBuff[startRecvPos:])
+		recvLen, err := c.tcpConn.Read(recviveBuff[startRecvPos:])
 		if err != nil {
 			return
 		}
@@ -198,7 +198,7 @@ func (c *Conn) writeLoop() {
 			if c.IsClosed() {
 				return
 			}
-			if _, err := c.conn.Write(p.Serialize()); err != nil {
+			if _, err := c.tcpConn.Write(p.Serialize()); err != nil {
 				return
 			}
 		}

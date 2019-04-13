@@ -9,28 +9,28 @@ import (
 	"syscall"
 	"time"
 
-	"../serverLib"
 )
 
 type Callback struct{}
 
-func (this *Callback) OnConnect(c *serverLib.Conn) bool {
+func (this *Callback) OnConnect(c *Conn) bool {
 	addr := c.GetRawConn().RemoteAddr()
 	c.PutExtraData(addr)
 	fmt.Println("OnConnect:", addr)
 	return true
 }
 
-func (this *Callback) OnMessage(c *serverLib.Conn, p serverLib.Packet) bool {
+func (this *Callback) OnMessage(c *Conn, p Packet) bool {
 	echoPacket := p.(*EchoPacket)
 	fmt.Printf("OnMessage:[%v] [%v]\n", echoPacket.GetLength(), string(echoPacket.GetBody()))
 	c.AsyncWritePacket(NewEchoPacket(echoPacket.Serialize(), true), time.Second)
 	return true
 }
 
-func (this *Callback) OnClose(c *serverLib.Conn) {
+func (this *Callback) OnClose(c *Conn) {
 	fmt.Println("OnClose:", c.GetExtraData())
 }
+
 
 func main() {
 	// creates a tcp listener
@@ -40,11 +40,11 @@ func main() {
 	checkError(err)
 
 	// creates a server
-	config := &serverLib.Config{
+	config := &Config{
 		PacketSendChanLimit:    20,
 		PacketReceiveChanLimit: 20,
 	}
-	srv := serverLib.NewServer(config, &Callback{}, &EchoProtocol{})
+	srv := NewServer(config, &Callback{}, &EchoProtocol{})
 
 	// starts service
 	go srv.Start(listener, time.Second)
