@@ -22,13 +22,13 @@ func (this *Callback) OnConnect(c *serverLib.Conn) bool {
 }
 
 func (this *Callback) OnMessage(c *serverLib.Conn, p serverLib.Packet) bool {
-	echoPacket := p.(*echo.EchoPacket)
+	echoPacket := p.(*EchoPacket)
 	fmt.Printf("OnMessage:[%v] [%v]\n", echoPacket.GetLength(), string(echoPacket.GetBody()))
-	c.AsyncWritePacket(echo.NewEchoPacket(echoPacket.Serialize(), true), time.Second)
+	c.AsyncWritePacket(NewEchoPacket(echoPacket.Serialize(), true), time.Second)
 	return true
 }
 
-func (this *Callback) OnClose(c *gotcp.Conn) {
+func (this *Callback) OnClose(c *serverLib.Conn) {
 	fmt.Println("OnClose:", c.GetExtraData())
 }
 
@@ -40,11 +40,11 @@ func main() {
 	checkError(err)
 
 	// creates a server
-	config := &gotcp.Config{
+	config := &serverLib.Config{
 		PacketSendChanLimit:    20,
 		PacketReceiveChanLimit: 20,
 	}
-	srv := gotcp.NewServer(config, &Callback{}, &echo.EchoProtocol{})
+	srv := serverLib.NewServer(config, &Callback{}, &EchoProtocol{})
 
 	// starts service
 	go srv.Start(listener, time.Second)
