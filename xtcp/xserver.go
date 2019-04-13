@@ -1,4 +1,4 @@
-package xtcpLib
+package main
 
 import (
 	"net"

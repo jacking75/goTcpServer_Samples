@@ -12,13 +12,11 @@ func main() {
 }
 
 func OnNewClient(c *Session) {
-
 }
 
 func OnClientConnectionClosed (c *Session, closeCase int) {
-
 }
 
 func OnNewMessage (c *Session, packetData []byte) {
-
 }
+
