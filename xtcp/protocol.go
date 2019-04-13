@@ -6,8 +6,8 @@ import (
 	"errors"	
 	"io"
 	"reflect"
-	
-	"./xtcpLib"
+
+	"github.com/golang/protobuf/proto"
 )
 
 var (
@@ -44,7 +44,7 @@ func (p *ProtobufPacket) String() string {
 }
 
 // PackSize return size need for pack ProtobufPacket.
-func (pro *ProtobufProtocol) PackSize(p xtcp.Packet) int {
+func (pro *ProtobufProtocol) PackSize(p Packet) int {
 	pp := p.(*ProtobufPacket)
 	if pp == nil {
 		return 0
@@ -59,7 +59,7 @@ func (pro *ProtobufProtocol) PackSize(p xtcp.Packet) int {
 }
 
 // PackTo :
-func (pro *ProtobufProtocol) PackTo(p xtcp.Packet, w io.Writer) (int, error) {
+func (pro *ProtobufProtocol) PackTo(p Packet, w io.Writer) (int, error) {
 	pp := p.(*ProtobufPacket)
 	if pp == nil {
 		return 0, errUnknownProtobufMsgType
@@ -102,7 +102,7 @@ func (pro *ProtobufProtocol) PackTo(p xtcp.Packet, w io.Writer) (int, error) {
 }
 
 // Pack :
-func (pro *ProtobufProtocol) Pack(p xtcp.Packet) ([]byte, error) {
+func (pro *ProtobufProtocol) Pack(p Packet) ([]byte, error) {
 	len := pro.PackSize(p)
 	if len != 0 {
 		buf := bytes.NewBuffer(nil)
@@ -113,7 +113,7 @@ func (pro *ProtobufProtocol) Pack(p xtcp.Packet) ([]byte, error) {
 }
 
 // Unpack :
-func (pro *ProtobufProtocol) Unpack(buf []byte) (xtcp.Packet, int, error) {
+func (pro *ProtobufProtocol) Unpack(buf []byte) (Packet, int, error) {
 	if len(buf) < 4 {
 		return nil, 0, nil
 	}

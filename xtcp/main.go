@@ -2,10 +2,12 @@ package main
 
 import (
 	"net"
-	"./xtcpLib"	
+
+	"github.com/golang/protobuf/proto"
+	"github.com/xfxdev/xlog"
 )
 
-type processor func(c *xtcp.Conn, msg proto.Message)
+type processor func(c *Conn, msg proto.Message)
 
 var (
 	protocol     = &ProtobufProtocol{}
@@ -21,7 +23,7 @@ func init() {
 	mapProcessor[proto.MessageName((*exampleproto.LoginResponse)(nil))] = loginResponseProcess
 	mapProcessor[proto.MessageName((*exampleproto.Chat)(nil))] = chatProcess
 }
-func loginRequestProcess(c *xtcp.Conn, msg proto.Message) {
+func loginRequestProcess(c *Conn, msg proto.Message) {
 	if request, ok := msg.(*exampleproto.LoginRequest); ok {
 		xlog.Info("login account : ", request.GetAccount())
 		xlog.Info("login pw : ", request.GetPassword())
@@ -37,7 +39,7 @@ func loginRequestProcess(c *xtcp.Conn, msg proto.Message) {
 		c.Send(buf)
 	}
 }
-func loginResponseProcess(c *xtcp.Conn, msg proto.Message) {
+func loginResponseProcess(c *Conn, msg proto.Message) {
 	if response, ok := msg.(*exampleproto.LoginResponse); ok {
 		if response.GetRet() == 1 {
 			xlog.Info("login success.")
@@ -52,7 +54,7 @@ func loginResponseProcess(c *xtcp.Conn, msg proto.Message) {
 		}
 	}
 }
-func chatProcess(c *xtcp.Conn, msg proto.Message) {
+func chatProcess(c *Conn, msg proto.Message) {
 	if chatMsg, ok := msg.(*exampleproto.Chat); ok {
 
 		xlog.Info(" - ", chatMsg.GetMsg())
@@ -71,7 +73,7 @@ func chatProcess(c *xtcp.Conn, msg proto.Message) {
 			case msgHi:
 				strResponseMsg = msgByeBye
 			case msgBye:
-				c.Stop(xtcp.StopGracefullyButNotWait)
+				c.Stop(StopGracefullyButNotWait)
 				return
 			}
 		}
@@ -86,15 +88,15 @@ func chatProcess(c *xtcp.Conn, msg proto.Message) {
 type myHandler struct {
 }
 
-func (h *myHandler) OnEvent(et xtcp.EventType, c *xtcp.Conn, p xtcp.Packet) {
+func (h *myHandler) OnEvent(et EventType, c *Conn, p Packet) {
 	switch et {
-	case xtcp.EventAccept:
+	case EventAccept:
 		xlog.Info("accept : ", c)
 		c.UserData = "server"
-	case xtcp.EventConnected:
+	case EventConnected:
 		xlog.Info("connected : ", c)
 		c.UserData = "client"
-	case xtcp.EventRecv:
+	case EventRecv:
 		if protobufPacket, ok := p.(*ProtobufPacket); ok {
 			proc := mapProcessor[proto.MessageName(protobufPacket.Msg)]
 			if proc != nil {
@@ -108,18 +110,18 @@ func (h *myHandler) OnEvent(et xtcp.EventType, c *xtcp.Conn, p xtcp.Packet) {
 
 func main() {
 	h := &myHandler{}
-	opts := xtcp.NewOpts(h, protocol)
+	opts := NewOpts(h, protocol)
 	l, err := net.Listen("tcp", ":")
 	if err != nil {
 		xlog.Error("listen err : ", err)
 		return
 	}
-	server := xtcp.NewServer(opts)
+	server := NewServer(opts)
 	go func() {
 		server.Serve(l)
 	}()
 
-	client := xtcp.NewConn(opts)
+	client := NewConn(opts)
 	clientClosed := make(chan struct{})
 	go func() {
 		err := client.DialAndServe(l.Addr().String())
@@ -137,6 +139,6 @@ func main() {
 	client.SendPacket(NewProtobufPacket(msgLoginRequest))
 
 	<-clientClosed
-	server.Stop(xtcp.StopGracefullyAndWait)
+	server.Stop(StopGracefullyAndWait)
 	xlog.Info("server and client stoped. thanks.")
 }
