@@ -4,5 +4,3 @@
 - tcp_server  https://github.com/firstrow/tcp_server
 - xtcp https://github.com/xfxdev/xtcp
   
-**아직 작업 중(Still working)**
-https://qiita.com/ak-ymst/items/18f465c7bebeb930d476
